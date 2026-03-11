@@ -20,7 +20,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { system, operator, objective, values, note } = body;
+    const { system, operator, objective, values, note, date } = body;
 
     const wavelengths = [405, 458, 488, 514, 561, 633];
     const hasAnyValue = wavelengths.some((wl) => values[wl] != null);
@@ -31,9 +31,12 @@ export async function POST(request: Request) {
       );
     }
 
+    const dateValue = date || new Date().toISOString();
+
     const { rows } = await sql<MeasurementRow>`
-      INSERT INTO measurements (system, operator, objective, power_405, power_458, power_488, power_514, power_561, power_633, note)
+      INSERT INTO measurements (date, system, operator, objective, power_405, power_458, power_488, power_514, power_561, power_633, note)
       VALUES (
+        ${dateValue},
         ${system},
         ${operator || ""},
         ${objective || ""},
