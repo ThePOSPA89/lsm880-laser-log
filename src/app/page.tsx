@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Measurement } from "@/lib/types";
 
 const MICROSCOPE_SYSTEMS = [
   "Elyra7-A2",
@@ -22,16 +23,6 @@ const LASER_LINES = [
   { name: "HeNe 633", wavelength: 633, color: "#ef4444" },
 ];
 
-interface Measurement {
-  id: string;
-  date: string;
-  system: string;
-  operator: string;
-  objective: string;
-  values: Record<number, number | null>;
-  note: string;
-}
-
 export default function Home() {
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [system, setSystem] = useState(MICROSCOPE_SYSTEMS[0]);
@@ -40,21 +31,27 @@ export default function Home() {
   const [values, setValues] = useState<Record<number, string>>({});
   const [note, setNote] = useState("");
   const [selectedLaser, setSelectedLaser] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem("lsm880-measurements");
-    if (saved) {
-      setMeasurements(JSON.parse(saved));
+    async function fetchMeasurements() {
+      try {
+        const res = await fetch("/api/measurements");
+        if (!res.ok) throw new Error("Failed to fetch measurements");
+        const data = await res.json();
+        setMeasurements(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load data");
+      } finally {
+        setLoading(false);
+      }
     }
+    fetchMeasurements();
   }, []);
 
-  useEffect(() => {
-    if (measurements.length > 0) {
-      localStorage.setItem("lsm880-measurements", JSON.stringify(measurements));
-    }
-  }, [measurements]);
-
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const parsedValues: Record<number, number | null> = {};
     for (const laser of LASER_LINES) {
@@ -65,27 +62,41 @@ export default function Home() {
     const hasAnyValue = Object.values(parsedValues).some((v) => v !== null);
     if (!hasAnyValue) return;
 
-    const measurement: Measurement = {
-      id: crypto.randomUUID(),
-      date: new Date().toISOString(),
-      system,
-      operator,
-      objective,
-      values: parsedValues,
-      note,
-    };
-
-    setMeasurements((prev) => [measurement, ...prev]);
-    setValues({});
-    setNote("");
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/measurements", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          system,
+          operator,
+          objective,
+          values: parsedValues,
+          note,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to save measurement");
+      const newMeasurement = await res.json();
+      setMeasurements((prev) => [newMeasurement, ...prev]);
+      setValues({});
+      setNote("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
-  function deleteMeasurement(id: string) {
-    setMeasurements((prev) => {
-      const next = prev.filter((m) => m.id !== id);
-      localStorage.setItem("lsm880-measurements", JSON.stringify(next));
-      return next;
-    });
+  async function deleteMeasurement(id: string) {
+    try {
+      const res = await fetch(`/api/measurements/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Failed to delete");
+      setMeasurements((prev) => prev.filter((m) => m.id !== id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete");
+    }
   }
 
   function getChartData(wavelength: number) {
@@ -120,6 +131,18 @@ export default function Home() {
       </header>
 
       <main className="mx-auto max-w-6xl px-6 py-8 flex flex-col gap-8">
+        {error && (
+          <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 flex items-center justify-between">
+            <span>{error}</span>
+            <button
+              onClick={() => setError(null)}
+              className="text-red-500 hover:text-red-700 font-medium cursor-pointer"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
         {/* Input Form */}
         <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-slate-900 mb-4">New Measurement</h2>
@@ -212,9 +235,10 @@ export default function Home() {
 
             <button
               type="submit"
-              className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 transition-colors cursor-pointer"
+              disabled={submitting}
+              className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Save Measurement
+              {submitting ? "Saving..." : "Save Measurement"}
             </button>
           </form>
         </section>
@@ -290,7 +314,11 @@ export default function Home() {
             </h2>
           </div>
 
-          {measurements.length === 0 ? (
+          {loading ? (
+            <div className="px-6 py-12 text-center text-sm text-slate-400">
+              Loading measurements...
+            </div>
+          ) : measurements.length === 0 ? (
             <div className="px-6 py-12 text-center text-sm text-slate-400">
               No measurements yet. Add your first one above.
             </div>
