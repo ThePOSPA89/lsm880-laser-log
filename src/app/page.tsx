@@ -34,6 +34,8 @@ export default function Home() {
   const [chartOffset, setChartOffset] = useState(0);
   const [filterSystem, setFilterSystem] = useState<string>("all");
   const [filterObjective, setFilterObjective] = useState<string>("all");
+  const [filterDateFrom, setFilterDateFrom] = useState<string>("");
+  const [filterDateTo, setFilterDateTo] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -104,10 +106,18 @@ export default function Home() {
     }
   }
 
-  // Filtered measurements based on system & objective
+  // Filtered measurements based on system, objective & date range
   const filteredMeasurements = measurements.filter((m) => {
     if (filterSystem !== "all" && m.system !== filterSystem) return false;
     if (filterObjective !== "all" && m.objective !== filterObjective) return false;
+    if (filterDateFrom) {
+      const mDate = new Date(m.date).toISOString().slice(0, 10);
+      if (mDate < filterDateFrom) return false;
+    }
+    if (filterDateTo) {
+      const mDate = new Date(m.date).toISOString().slice(0, 10);
+      if (mDate > filterDateTo) return false;
+    }
     return true;
   });
 
@@ -316,9 +326,28 @@ export default function Home() {
                 <option key={o} value={o}>{o}</option>
               ))}
             </select>
-            {(filterSystem !== "all" || filterObjective !== "all") && (
+            <span className="text-xs text-slate-400 mx-1">|</span>
+            <label className="flex items-center gap-1.5 text-xs text-slate-500">
+              From:
+              <input
+                type="date"
+                value={filterDateFrom}
+                onChange={(e) => { setFilterDateFrom(e.target.value); setChartOffset(0); }}
+                className="rounded-md border border-slate-300 px-2 py-1.5 text-xs bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+              />
+            </label>
+            <label className="flex items-center gap-1.5 text-xs text-slate-500">
+              To:
+              <input
+                type="date"
+                value={filterDateTo}
+                onChange={(e) => { setFilterDateTo(e.target.value); setChartOffset(0); }}
+                className="rounded-md border border-slate-300 px-2 py-1.5 text-xs bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+              />
+            </label>
+            {(filterSystem !== "all" || filterObjective !== "all" || filterDateFrom || filterDateTo) && (
               <button
-                onClick={() => { setFilterSystem("all"); setFilterObjective("all"); setChartOffset(0); }}
+                onClick={() => { setFilterSystem("all"); setFilterObjective("all"); setFilterDateFrom(""); setFilterDateTo(""); setChartOffset(0); }}
                 className="text-xs text-indigo-600 hover:text-indigo-800 font-medium cursor-pointer"
               >
                 Clear filters
@@ -458,7 +487,7 @@ export default function Home() {
             <h2 className="text-lg font-semibold text-slate-900">
               History
               <span className="ml-2 text-sm font-normal text-slate-500">
-                {filterSystem !== "all" || filterObjective !== "all"
+                {filterSystem !== "all" || filterObjective !== "all" || filterDateFrom || filterDateTo
                   ? `(${filteredMeasurements.length} of ${measurements.length} records)`
                   : `(${measurements.length} records)`}
               </span>
