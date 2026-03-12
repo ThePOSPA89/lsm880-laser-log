@@ -43,7 +43,7 @@ export default function Home() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const VISIBLE_POINTS = 20;
+  const VISIBLE_POINTS = 100;
 
   useEffect(() => {
     async function fetchMeasurements() {
