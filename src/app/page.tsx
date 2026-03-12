@@ -31,9 +31,14 @@ export default function Home() {
   const [values, setValues] = useState<Record<number, string>>({});
   const [note, setNote] = useState("");
   const [selectedLaser, setSelectedLaser] = useState<number | null>(null);
+  const [chartOffset, setChartOffset] = useState(0);
+  const [filterSystem, setFilterSystem] = useState<string>("all");
+  const [filterObjective, setFilterObjective] = useState<string>("all");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const VISIBLE_POINTS = 20;
 
   useEffect(() => {
     async function fetchMeasurements() {
@@ -99,8 +104,19 @@ export default function Home() {
     }
   }
 
+  // Filtered measurements based on system & objective
+  const filteredMeasurements = measurements.filter((m) => {
+    if (filterSystem !== "all" && m.system !== filterSystem) return false;
+    if (filterObjective !== "all" && m.objective !== filterObjective) return false;
+    return true;
+  });
+
+  // Unique values for filter dropdowns
+  const uniqueSystems = [...new Set(measurements.map((m) => m.system).filter(Boolean))];
+  const uniqueObjectives = [...new Set(measurements.map((m) => m.objective).filter(Boolean))];
+
   function getChartData(wavelength: number) {
-    return measurements
+    return filteredMeasurements
       .filter((m) => m.values[wavelength] !== null)
       .map((m) => ({
         date: new Date(m.date).toLocaleDateString("cs-CZ"),
@@ -109,8 +125,13 @@ export default function Home() {
       .reverse();
   }
 
-  const chartData = selectedLaser ? getChartData(selectedLaser) : [];
+  const chartDataAll = selectedLaser ? getChartData(selectedLaser) : [];
+  const maxSliderOffset = Math.max(0, chartDataAll.length - VISIBLE_POINTS);
+  const safeOffset = Math.min(chartOffset, maxSliderOffset);
+  const chartData = chartDataAll.slice(safeOffset, safeOffset + VISIBLE_POINTS);
+  // Y-axis zooms to the visible window
   const maxValue = chartData.length > 0 ? Math.max(...chartData.map((d) => d.value)) : 0;
+  const minValue = chartData.length > 0 ? Math.min(...chartData.map((d) => d.value)) : 0;
   const selectedLaserInfo = LASER_LINES.find((l) => l.wavelength === selectedLaser);
 
   return (
@@ -226,7 +247,7 @@ export default function Home() {
                         [laser.wavelength]: e.target.value,
                       }))
                     }
-                    placeholder="µW"
+                    placeholder="mW"
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none font-mono"
                   />
                 </div>
@@ -251,11 +272,12 @@ export default function Home() {
               {LASER_LINES.map((laser) => (
                 <button
                   key={laser.wavelength}
-                  onClick={() =>
+                  onClick={() => {
                     setSelectedLaser(
                       selectedLaser === laser.wavelength ? null : laser.wavelength
-                    )
-                  }
+                    );
+                    setChartOffset(0);
+                  }}
                   className="px-2.5 py-1 text-xs font-medium rounded-full border transition-colors cursor-pointer"
                   style={{
                     backgroundColor:
@@ -271,31 +293,158 @@ export default function Home() {
             </div>
           </div>
 
-          {selectedLaser && chartData.length > 0 ? (
-            <div className="h-48 flex items-end gap-1">
-              {chartData.map((d, i) => (
-                <div
-                  key={i}
-                  className="flex-1 flex flex-col items-center justify-end gap-1"
-                >
-                  <span className="text-[10px] font-mono text-slate-600">
-                    {d.value}
-                  </span>
-                  <div
-                    className="w-full rounded-t-sm transition-all min-h-[4px]"
-                    style={{
-                      height: `${maxValue > 0 ? (d.value / maxValue) * 140 : 4}px`,
-                      backgroundColor: selectedLaserInfo?.color || "#6366f1",
-                    }}
-                  />
-                  <span className="text-[9px] text-slate-400 -rotate-45 origin-top-left whitespace-nowrap">
-                    {d.date}
-                  </span>
-                </div>
+          {/* Filters */}
+          <div className="flex flex-wrap items-center gap-3 mb-4 p-3 rounded-lg bg-slate-50 border border-slate-100">
+            <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Filter:</span>
+            <select
+              value={filterSystem}
+              onChange={(e) => { setFilterSystem(e.target.value); setChartOffset(0); }}
+              className="rounded-md border border-slate-300 px-2.5 py-1.5 text-xs bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+            >
+              <option value="all">All Systems</option>
+              {uniqueSystems.map((s) => (
+                <option key={s} value={s}>{s}</option>
               ))}
-            </div>
+            </select>
+            <select
+              value={filterObjective}
+              onChange={(e) => { setFilterObjective(e.target.value); setChartOffset(0); }}
+              className="rounded-md border border-slate-300 px-2.5 py-1.5 text-xs bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+            >
+              <option value="all">All Objectives</option>
+              {uniqueObjectives.map((o) => (
+                <option key={o} value={o}>{o}</option>
+              ))}
+            </select>
+            {(filterSystem !== "all" || filterObjective !== "all") && (
+              <button
+                onClick={() => { setFilterSystem("all"); setFilterObjective("all"); setChartOffset(0); }}
+                className="text-xs text-indigo-600 hover:text-indigo-800 font-medium cursor-pointer"
+              >
+                Clear filters
+              </button>
+            )}
+            <span className="ml-auto text-xs text-slate-400">
+              {filteredMeasurements.length} / {measurements.length} records
+            </span>
+          </div>
+
+          {selectedLaser && chartData.length > 0 ? (
+            <>
+              {(() => {
+                const W = 700;
+                const H = 200;
+                const padTop = 25;
+                const padBottom = 50;
+                const padLeft = 45;
+                const padRight = 15;
+                const plotW = W - padLeft - padRight;
+                const plotH = H - padTop - padBottom;
+                const yRange = maxValue - minValue;
+                const yPad = yRange * 0.1 || 0.5;
+                const yMin = minValue - yPad;
+                const yMax = maxValue + yPad;
+
+                const points = chartData.map((d, i) => {
+                  const x = padLeft + (chartData.length > 1 ? (i / (chartData.length - 1)) * plotW : plotW / 2);
+                  const y = padTop + plotH - ((d.value - yMin) / (yMax - yMin)) * plotH;
+                  return { x, y, ...d };
+                });
+
+                const linePath = points.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ");
+                const color = selectedLaserInfo?.color || "#6366f1";
+
+                // Y-axis ticks
+                const yTicks = 5;
+                const yTickValues = Array.from({ length: yTicks }, (_, i) => yMin + ((yMax - yMin) * i) / (yTicks - 1));
+
+                // X-axis labels - show every Nth label
+                const labelEvery = Math.max(1, Math.ceil(chartData.length / 8));
+
+                return (
+                  <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-56">
+                    {/* Grid lines */}
+                    {yTickValues.map((v, i) => {
+                      const y = padTop + plotH - ((v - yMin) / (yMax - yMin)) * plotH;
+                      return (
+                        <g key={i}>
+                          <line x1={padLeft} x2={W - padRight} y1={y} y2={y} stroke="#e2e8f0" strokeWidth={0.5} />
+                          <text x={padLeft - 6} y={y + 3} textAnchor="end" fontSize={9} fill="#94a3b8" fontFamily="monospace">
+                            {v.toFixed(1)}
+                          </text>
+                        </g>
+                      );
+                    })}
+
+                    {/* Area fill */}
+                    <path
+                      d={`${linePath} L${points[points.length - 1].x},${padTop + plotH} L${points[0].x},${padTop + plotH} Z`}
+                      fill={color}
+                      opacity={0.08}
+                    />
+
+                    {/* Line */}
+                    <path d={linePath} fill="none" stroke={color} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+
+                    {/* Data points */}
+                    {points.map((p, i) => (
+                      <g key={i}>
+                        <circle cx={p.x} cy={p.y} r={3} fill="white" stroke={color} strokeWidth={1.5} />
+                        {/* Value label on hover area */}
+                        <text x={p.x} y={p.y - 8} textAnchor="middle" fontSize={8} fill="#475569" fontFamily="monospace">
+                          {p.value}
+                        </text>
+                      </g>
+                    ))}
+
+                    {/* X-axis labels */}
+                    {points.map((p, i) =>
+                      i % labelEvery === 0 ? (
+                        <text
+                          key={i}
+                          x={p.x}
+                          y={H - padBottom + 14}
+                          textAnchor="middle"
+                          fontSize={8}
+                          fill="#94a3b8"
+                          transform={`rotate(-35, ${p.x}, ${H - padBottom + 14})`}
+                        >
+                          {p.date}
+                        </text>
+                      ) : null
+                    )}
+
+                    {/* Y-axis label */}
+                    <text x={12} y={padTop + plotH / 2} textAnchor="middle" fontSize={9} fill="#94a3b8" transform={`rotate(-90, 12, ${padTop + plotH / 2})`}>
+                      mW
+                    </text>
+                  </svg>
+                );
+              })()}
+
+              {/* Range slider */}
+              {chartDataAll.length > VISIBLE_POINTS && (
+                <div className="mt-2 px-2">
+                  <input
+                    type="range"
+                    min={0}
+                    max={maxSliderOffset}
+                    value={safeOffset}
+                    onChange={(e) => setChartOffset(Number(e.target.value))}
+                    className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                  />
+                  <div className="flex justify-between text-[10px] text-slate-400 mt-1">
+                    <span>{chartDataAll[0]?.date}</span>
+                    <span className="text-slate-500 font-medium">
+                      {chartData[0]?.date} — {chartData[chartData.length - 1]?.date}
+                    </span>
+                    <span>{chartDataAll[chartDataAll.length - 1]?.date}</span>
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
-            <div className="h-48 flex items-center justify-center text-sm text-slate-400">
+            <div className="h-56 flex items-center justify-center text-sm text-slate-400">
               {selectedLaser
                 ? "No data for this laser line"
                 : "Select a laser line to see the trend"}
@@ -309,7 +458,9 @@ export default function Home() {
             <h2 className="text-lg font-semibold text-slate-900">
               History
               <span className="ml-2 text-sm font-normal text-slate-500">
-                ({measurements.length} records)
+                {filterSystem !== "all" || filterObjective !== "all"
+                  ? `(${filteredMeasurements.length} of ${measurements.length} records)`
+                  : `(${measurements.length} records)`}
               </span>
             </h2>
           </div>
@@ -318,9 +469,11 @@ export default function Home() {
             <div className="px-6 py-12 text-center text-sm text-slate-400">
               Loading measurements...
             </div>
-          ) : measurements.length === 0 ? (
+          ) : filteredMeasurements.length === 0 ? (
             <div className="px-6 py-12 text-center text-sm text-slate-400">
-              No measurements yet. Add your first one above.
+              {measurements.length === 0
+                ? "No measurements yet. Add your first one above."
+                : "No measurements match the current filters."}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -348,7 +501,7 @@ export default function Home() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {measurements.map((m) => (
+                  {filteredMeasurements.map((m) => (
                     <tr key={m.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-4 py-3 whitespace-nowrap font-mono text-xs text-slate-600">
                         {new Date(m.date).toLocaleString("cs-CZ")}
