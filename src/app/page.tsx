@@ -15,12 +15,15 @@ const MICROSCOPE_SYSTEMS = [
 ];
 
 const LASER_LINES = [
-  { name: "Diode 405", wavelength: 405, color: "#7c3aed" },
-  { name: "Argon 458", wavelength: 458, color: "#2563eb" },
-  { name: "Argon 488", wavelength: 488, color: "#06b6d4" },
-  { name: "Argon 514", wavelength: 514, color: "#22c55e" },
-  { name: "DPSS 561", wavelength: 561, color: "#eab308" },
-  { name: "HeNe 633", wavelength: 633, color: "#ef4444" },
+  { name: "Diode 405", key: "405", color: "#7c3aed" },
+  { name: "Argon 458", key: "458", color: "#2563eb" },
+  { name: "Argon 488", key: "488", color: "#06b6d4" },
+  { name: "Argon 514", key: "514", color: "#22c55e" },
+  { name: "DPSS 561", key: "561", color: "#eab308" },
+  { name: "HeNe 633", key: "633", color: "#ef4444" },
+  { name: "Argon 458 max", key: "458_max", color: "#1e40af" },
+  { name: "Argon 488 max", key: "488_max", color: "#0891b2" },
+  { name: "Argon 514 max", key: "514_max", color: "#15803d" },
 ];
 
 export default function Home() {
@@ -28,9 +31,9 @@ export default function Home() {
   const [system, setSystem] = useState(MICROSCOPE_SYSTEMS[0]);
   const [operator, setOperator] = useState("");
   const [objective, setObjective] = useState("10x/0.3 Dry");
-  const [values, setValues] = useState<Record<number, string>>({});
+  const [values, setValues] = useState<Record<string, string>>({});
   const [note, setNote] = useState("");
-  const [selectedLaser, setSelectedLaser] = useState<number | null>(null);
+  const [selectedLaser, setSelectedLaser] = useState<string | null>(null);
   const [chartOffset, setChartOffset] = useState(0);
   const [filterSystem, setFilterSystem] = useState<string>("all");
   const [filterObjective, setFilterObjective] = useState<string>("all");
@@ -60,10 +63,10 @@ export default function Home() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const parsedValues: Record<number, number | null> = {};
+    const parsedValues: Record<string, number | null> = {};
     for (const laser of LASER_LINES) {
-      const v = values[laser.wavelength];
-      parsedValues[laser.wavelength] = v ? parseFloat(v) : null;
+      const v = values[laser.key];
+      parsedValues[laser.key] = v ? parseFloat(v) : null;
     }
 
     const hasAnyValue = Object.values(parsedValues).some((v) => v !== null);
@@ -125,12 +128,12 @@ export default function Home() {
   const uniqueSystems = [...new Set(measurements.map((m) => m.system).filter(Boolean))];
   const uniqueObjectives = [...new Set(measurements.map((m) => m.objective).filter(Boolean))];
 
-  function getChartData(wavelength: number) {
+  function getChartData(laserKey: string) {
     return filteredMeasurements
-      .filter((m) => m.values[wavelength] !== null)
+      .filter((m) => m.values[laserKey] !== null && m.values[laserKey] !== undefined)
       .map((m) => ({
         date: new Date(m.date).toLocaleDateString("cs-CZ"),
-        value: m.values[wavelength] as number,
+        value: m.values[laserKey] as number,
       }))
       .reverse();
   }
@@ -142,7 +145,7 @@ export default function Home() {
   // Y-axis zooms to the visible window
   const maxValue = chartData.length > 0 ? Math.max(...chartData.map((d) => d.value)) : 0;
   const minValue = chartData.length > 0 ? Math.min(...chartData.map((d) => d.value)) : 0;
-  const selectedLaserInfo = LASER_LINES.find((l) => l.wavelength === selectedLaser);
+  const selectedLaserInfo = LASER_LINES.find((l) => l.key === selectedLaser);
 
   return (
     <div className="min-h-screen bg-[var(--background)] font-[family-name:var(--font-sans)]">
@@ -237,25 +240,25 @@ export default function Home() {
             </div>
 
             {/* Laser power inputs */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 mb-4">
+            <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-9 gap-3 mb-4">
               {LASER_LINES.map((laser) => (
-                <div key={laser.wavelength} className="relative">
+                <div key={laser.key} className="relative">
                   <label className="block text-xs font-medium text-slate-600 mb-1">
                     <span
                       className="inline-block w-2.5 h-2.5 rounded-full mr-1"
                       style={{ backgroundColor: laser.color }}
                     />
-                    {laser.name} nm
+                    {laser.name}
                   </label>
                   <input
                     type="number"
                     step="0.01"
                     min="0"
-                    value={values[laser.wavelength] || ""}
+                    value={values[laser.key] || ""}
                     onChange={(e) =>
                       setValues((prev) => ({
                         ...prev,
-                        [laser.wavelength]: e.target.value,
+                        [laser.key]: e.target.value,
                       }))
                     }
                     placeholder="mW"
@@ -279,26 +282,26 @@ export default function Home() {
         <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-slate-900">Power Trend</h2>
-            <div className="flex gap-1.5">
+            <div className="flex flex-wrap gap-1.5">
               {LASER_LINES.map((laser) => (
                 <button
-                  key={laser.wavelength}
+                  key={laser.key}
                   onClick={() => {
                     setSelectedLaser(
-                      selectedLaser === laser.wavelength ? null : laser.wavelength
+                      selectedLaser === laser.key ? null : laser.key
                     );
                     setChartOffset(0);
                   }}
                   className="px-2.5 py-1 text-xs font-medium rounded-full border transition-colors cursor-pointer"
                   style={{
                     backgroundColor:
-                      selectedLaser === laser.wavelength ? laser.color : "transparent",
+                      selectedLaser === laser.key ? laser.color : "transparent",
                     color:
-                      selectedLaser === laser.wavelength ? "white" : laser.color,
+                      selectedLaser === laser.key ? "white" : laser.color,
                     borderColor: laser.color,
                   }}
                 >
-                  {laser.wavelength}
+                  {laser.key}
                 </button>
               ))}
             </div>
@@ -516,14 +519,14 @@ export default function Home() {
                     <th className="px-4 py-3 text-left font-medium">Objective</th>
                     {LASER_LINES.map((laser) => (
                       <th
-                        key={laser.wavelength}
+                        key={laser.key}
                         className="px-3 py-3 text-right font-medium whitespace-nowrap"
                       >
                         <span
                           className="inline-block w-2 h-2 rounded-full mr-1"
                           style={{ backgroundColor: laser.color }}
                         />
-                        {laser.wavelength}
+                        {laser.key}
                       </th>
                     ))}
                     <th className="px-4 py-3 text-left font-medium">Note</th>
@@ -545,12 +548,12 @@ export default function Home() {
                       </td>
                       {LASER_LINES.map((laser) => (
                         <td
-                          key={laser.wavelength}
+                          key={laser.key}
                           className="px-3 py-3 text-right font-mono text-xs"
                         >
-                          {m.values[laser.wavelength] !== null ? (
+                          {m.values[laser.key] !== null && m.values[laser.key] !== undefined ? (
                             <span className="text-slate-800">
-                              {m.values[laser.wavelength]}
+                              {m.values[laser.key]}
                             </span>
                           ) : (
                             <span className="text-slate-300">—</span>

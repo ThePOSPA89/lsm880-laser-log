@@ -16,9 +16,16 @@ export async function GET() {
         power_514 REAL,
         power_561 REAL,
         power_633 REAL,
+        power_458_max REAL,
+        power_488_max REAL,
+        power_514_max REAL,
         note TEXT NOT NULL DEFAULT ''
       );
     `;
+    // Add columns if table already exists (migration)
+    await sql`ALTER TABLE measurements ADD COLUMN IF NOT EXISTS power_458_max REAL`;
+    await sql`ALTER TABLE measurements ADD COLUMN IF NOT EXISTS power_488_max REAL`;
+    await sql`ALTER TABLE measurements ADD COLUMN IF NOT EXISTS power_514_max REAL`;
     return NextResponse.json({ message: "Table created successfully" });
   } catch (error) {
     return NextResponse.json(

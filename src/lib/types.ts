@@ -1,4 +1,6 @@
 export const WAVELENGTHS = [405, 458, 488, 514, 561, 633] as const;
+export const WAVELENGTHS_MAX = ["458_max", "488_max", "514_max"] as const;
+export const ALL_POWER_KEYS = [...WAVELENGTHS.map(String), ...WAVELENGTHS_MAX] as const;
 export type Wavelength = (typeof WAVELENGTHS)[number];
 
 export interface Measurement {
@@ -7,6 +9,6 @@ export interface Measurement {
   system: string;
   operator: string;
   objective: string;
-  values: Record<number, number | null>;
+  values: Record<string, number | null>;
   note: string;
 }
