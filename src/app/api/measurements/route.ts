@@ -17,6 +17,26 @@ export async function GET() {
   }
 }
 
+export async function PATCH(request: Request) {
+  try {
+    const body = await request.json();
+    const { where, set } = body;
+    // Update objective for matching records
+    if (where?.objective && set?.objective) {
+      const { rowCount } = await sql`
+        UPDATE measurements SET objective = ${set.objective} WHERE objective = ${where.objective}
+      `;
+      return NextResponse.json({ updated: rowCount });
+    }
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Database error" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();

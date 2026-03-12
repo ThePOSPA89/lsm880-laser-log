@@ -27,7 +27,7 @@ export default function Home() {
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [system, setSystem] = useState(MICROSCOPE_SYSTEMS[0]);
   const [operator, setOperator] = useState("");
-  const [objective, setObjective] = useState("Plan-Apochromat 63x/1.4 Oil");
+  const [objective, setObjective] = useState("10x/0.3 Dry");
   const [values, setValues] = useState<Record<number, string>>({});
   const [note, setNote] = useState("");
   const [selectedLaser, setSelectedLaser] = useState<number | null>(null);
@@ -214,6 +214,7 @@ export default function Home() {
                   onChange={(e) => setObjective(e.target.value)}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none bg-white"
                 >
+                  <option>10x/0.3 Dry</option>
                   <option>Plan-Apochromat 63x/1.4 Oil</option>
                   <option>Plan-Apochromat 40x/1.3 Oil</option>
                   <option>Plan-Apochromat 20x/0.8</option>
