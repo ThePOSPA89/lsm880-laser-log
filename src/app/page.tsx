@@ -34,7 +34,7 @@ export default function Home() {
   const [values, setValues] = useState<Record<string, string>>({});
   const [note, setNote] = useState("");
   const [selectedLaser, setSelectedLaser] = useState<string | null>(null);
-  const [chartOffset, setChartOffset] = useState(0);
+  const [chartOffset, setChartOffset] = useState(-1);
   const [filterSystem, setFilterSystem] = useState<string>("all");
   const [filterObjective, setFilterObjective] = useState<string>("all");
   const [filterDateFrom, setFilterDateFrom] = useState<string>("");
@@ -140,7 +140,8 @@ export default function Home() {
 
   const chartDataAll = selectedLaser ? getChartData(selectedLaser) : [];
   const maxSliderOffset = Math.max(0, chartDataAll.length - VISIBLE_POINTS);
-  const safeOffset = Math.min(chartOffset, maxSliderOffset);
+  // Default to latest data (end of timeline) when chartOffset is -1 (initial)
+  const safeOffset = chartOffset === -1 ? maxSliderOffset : Math.min(chartOffset, maxSliderOffset);
   const chartData = chartDataAll.slice(safeOffset, safeOffset + VISIBLE_POINTS);
   // Y-axis zooms to the visible window
   const maxValue = chartData.length > 0 ? Math.max(...chartData.map((d) => d.value)) : 0;
@@ -290,7 +291,7 @@ export default function Home() {
                     setSelectedLaser(
                       selectedLaser === laser.key ? null : laser.key
                     );
-                    setChartOffset(0);
+                    setChartOffset(-1);
                   }}
                   className="px-2.5 py-1 text-xs font-medium rounded-full border transition-colors cursor-pointer"
                   style={{
@@ -312,7 +313,7 @@ export default function Home() {
             <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Filter:</span>
             <select
               value={filterSystem}
-              onChange={(e) => { setFilterSystem(e.target.value); setChartOffset(0); }}
+              onChange={(e) => { setFilterSystem(e.target.value); setChartOffset(-1); }}
               className="rounded-md border border-slate-300 px-2.5 py-1.5 text-xs bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
             >
               <option value="all">All Systems</option>
@@ -322,7 +323,7 @@ export default function Home() {
             </select>
             <select
               value={filterObjective}
-              onChange={(e) => { setFilterObjective(e.target.value); setChartOffset(0); }}
+              onChange={(e) => { setFilterObjective(e.target.value); setChartOffset(-1); }}
               className="rounded-md border border-slate-300 px-2.5 py-1.5 text-xs bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
             >
               <option value="all">All Objectives</option>
@@ -336,7 +337,7 @@ export default function Home() {
               <input
                 type="date"
                 value={filterDateFrom}
-                onChange={(e) => { setFilterDateFrom(e.target.value); setChartOffset(0); }}
+                onChange={(e) => { setFilterDateFrom(e.target.value); setChartOffset(-1); }}
                 className="rounded-md border border-slate-300 px-2 py-1.5 text-xs bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
               />
             </label>
@@ -345,13 +346,13 @@ export default function Home() {
               <input
                 type="date"
                 value={filterDateTo}
-                onChange={(e) => { setFilterDateTo(e.target.value); setChartOffset(0); }}
+                onChange={(e) => { setFilterDateTo(e.target.value); setChartOffset(-1); }}
                 className="rounded-md border border-slate-300 px-2 py-1.5 text-xs bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
               />
             </label>
             {(filterSystem !== "all" || filterObjective !== "all" || filterDateFrom || filterDateTo) && (
               <button
-                onClick={() => { setFilterSystem("all"); setFilterObjective("all"); setFilterDateFrom(""); setFilterDateTo(""); setChartOffset(0); }}
+                onClick={() => { setFilterSystem("all"); setFilterObjective("all"); setFilterDateFrom(""); setFilterDateTo(""); setChartOffset(-1); }}
                 className="text-xs text-indigo-600 hover:text-indigo-800 font-medium cursor-pointer"
               >
                 Clear filters
