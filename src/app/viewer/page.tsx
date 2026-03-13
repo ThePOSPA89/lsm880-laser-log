@@ -50,6 +50,19 @@ export default function LaserPowerViewer() {
   const uniqueSystems = [...new Set(measurements.map((m) => m.system).filter(Boolean))];
   const uniqueObjectives = [...new Set(measurements.map((m) => m.objective).filter(Boolean))];
 
+  // Only show laser buttons that have data in the filtered measurements
+  const availableLasers = LASER_LINES.filter((laser) =>
+    filteredMeasurements.some(
+      (m) => m.values[laser.key] !== null && m.values[laser.key] !== undefined
+    )
+  );
+
+  // Deselect laser if it's no longer available after filter change
+  const effectiveSelectedLaser =
+    selectedLaser && availableLasers.some((l) => l.key === selectedLaser)
+      ? selectedLaser
+      : null;
+
   function getChartData(laserKey: string) {
     return filteredMeasurements
       .filter((m) => m.values[laserKey] !== null && m.values[laserKey] !== undefined)
@@ -60,13 +73,13 @@ export default function LaserPowerViewer() {
       .reverse();
   }
 
-  const chartDataAll = selectedLaser ? getChartData(selectedLaser) : [];
+  const chartDataAll = effectiveSelectedLaser ? getChartData(effectiveSelectedLaser) : [];
   const maxSliderOffset = Math.max(0, chartDataAll.length - VISIBLE_POINTS);
   const safeOffset = chartOffset === -1 ? maxSliderOffset : Math.min(chartOffset, maxSliderOffset);
   const chartData = chartDataAll.slice(safeOffset, safeOffset + VISIBLE_POINTS);
   const maxValue = chartData.length > 0 ? Math.max(...chartData.map((d) => d.value)) : 0;
   const minValue = chartData.length > 0 ? Math.min(...chartData.map((d) => d.value)) : 0;
-  const selectedLaserInfo = LASER_LINES.find((l) => l.key === selectedLaser);
+  const selectedLaserInfo = LASER_LINES.find((l) => l.key === effectiveSelectedLaser);
 
   return (
     <div className="min-h-screen bg-[var(--background)] font-[family-name:var(--font-sans)]">
@@ -109,23 +122,25 @@ export default function LaserPowerViewer() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-slate-900">Power Trend</h2>
               <div className="flex flex-wrap gap-1.5">
-                {LASER_LINES.map((laser) => (
+                {availableLasers.length > 0 ? availableLasers.map((laser) => (
                   <button
                     key={laser.key}
                     onClick={() => {
-                      setSelectedLaser(selectedLaser === laser.key ? null : laser.key);
+                      setSelectedLaser(effectiveSelectedLaser === laser.key ? null : laser.key);
                       setChartOffset(-1);
                     }}
                     className="px-2.5 py-1 text-xs font-medium rounded-full border transition-colors cursor-pointer"
                     style={{
-                      backgroundColor: selectedLaser === laser.key ? laser.color : "transparent",
-                      color: selectedLaser === laser.key ? "white" : laser.color,
+                      backgroundColor: effectiveSelectedLaser === laser.key ? laser.color : "transparent",
+                      color: effectiveSelectedLaser === laser.key ? "white" : laser.color,
                       borderColor: laser.color,
                     }}
                   >
                     {laser.key}
                   </button>
-                ))}
+                )) : (
+                  <span className="text-xs text-slate-400">No laser data available</span>
+                )}
               </div>
             </div>
 
@@ -185,7 +200,7 @@ export default function LaserPowerViewer() {
             </div>
 
             {/* Chart */}
-            {selectedLaser && chartData.length > 0 ? (
+            {effectiveSelectedLaser && chartData.length > 0 ? (
               <>
                 {(() => {
                   const W = 1200;
@@ -300,7 +315,7 @@ export default function LaserPowerViewer() {
               </>
             ) : (
               <div className="h-[28rem] flex items-center justify-center text-sm text-slate-400">
-                {selectedLaser
+                {effectiveSelectedLaser
                   ? "No data for this laser line"
                   : "Select a laser line to see the trend"}
               </div>
