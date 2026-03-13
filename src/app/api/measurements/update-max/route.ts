@@ -1,11 +1,7 @@
 import { sql } from "@vercel/postgres";
 import { NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth";
 
 export async function PATCH(request: Request) {
-  const authError = requireAdmin(request);
-  if (authError) return authError;
-
   try {
     const body = await request.json();
     const { id, power_458_max, power_488_max, power_514_max } = body;

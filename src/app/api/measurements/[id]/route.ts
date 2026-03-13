@@ -1,14 +1,10 @@
 import { sql } from "@vercel/postgres";
 import { NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth";
 
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const authError = requireAdmin(request);
-  if (authError) return authError;
-
   try {
     const { id } = await params;
 

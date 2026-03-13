@@ -1,7 +1,6 @@
 import { sql } from "@vercel/postgres";
 import { NextResponse } from "next/server";
 import { rowToMeasurement, MeasurementRow } from "@/lib/db";
-import { requireAdmin } from "@/lib/auth";
 
 export async function GET() {
   try {
@@ -19,9 +18,6 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
-  const authError = requireAdmin(request);
-  if (authError) return authError;
-
   try {
     const body = await request.json();
     const { where, set } = body;
@@ -42,9 +38,6 @@ export async function PATCH(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const authError = requireAdmin(request);
-  if (authError) return authError;
-
   try {
     const body = await request.json();
     const { system, operator, objective, values, note, date } = body;
