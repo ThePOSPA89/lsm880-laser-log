@@ -43,7 +43,7 @@ export default function Home() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const VISIBLE_POINTS = 100;
+  const VISIBLE_POINTS = 40;
 
   useEffect(() => {
     async function fetchMeasurements() {
@@ -279,8 +279,8 @@ export default function Home() {
           </form>
         </section>
 
-        {/* Chart */}
-        <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        {/* Chart – full width */}
+        <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm -mx-6 px-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-slate-900">Power Trend</h2>
             <div className="flex flex-wrap gap-1.5">
@@ -366,12 +366,12 @@ export default function Home() {
           {selectedLaser && chartData.length > 0 ? (
             <>
               {(() => {
-                const W = 700;
-                const H = 200;
+                const W = 1200;
+                const H = 300;
                 const padTop = 25;
-                const padBottom = 50;
-                const padLeft = 45;
-                const padRight = 15;
+                const padBottom = 55;
+                const padLeft = 50;
+                const padRight = 20;
                 const plotW = W - padLeft - padRight;
                 const plotH = H - padTop - padBottom;
                 const yRange = maxValue - minValue;
@@ -396,7 +396,7 @@ export default function Home() {
                 const labelEvery = Math.max(1, Math.ceil(chartData.length / 8));
 
                 return (
-                  <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-56">
+                  <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-80">
                     {/* Grid lines */}
                     {yTickValues.map((v, i) => {
                       const y = padTop + plotH - ((v - yMin) / (yMax - yMin)) * plotH;
