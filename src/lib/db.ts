@@ -12,6 +12,7 @@ export interface MeasurementRow {
   power_514: number | null;
   power_561: number | null;
   power_633: number | null;
+  power_640: number | null;
   power_458_max: number | null;
   power_488_max: number | null;
   power_514_max: number | null;

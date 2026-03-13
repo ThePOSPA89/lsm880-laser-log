@@ -11,6 +11,7 @@ export const LASER_LINES: LaserLine[] = [
   { name: "Argon 514", key: "514", color: "#22c55e" },
   { name: "DPSS 561", key: "561", color: "#eab308" },
   { name: "HeNe 633", key: "633", color: "#ef4444" },
+  { name: "Diode 640", key: "640", color: "#dc2626" },
   { name: "Argon 458 max", key: "458_max", color: "#1e40af" },
   { name: "Argon 488 max", key: "488_max", color: "#0891b2" },
   { name: "Argon 514 max", key: "514_max", color: "#15803d" },

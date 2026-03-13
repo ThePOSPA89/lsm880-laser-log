@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { system, operator, objective, values, note, date } = body;
 
-    const allKeys = ["405", "458", "488", "514", "561", "633", "458_max", "488_max", "514_max"];
+    const allKeys = ["405", "458", "488", "514", "561", "633", "640", "458_max", "488_max", "514_max"];
     const hasAnyValue = allKeys.some((k) => values[k] != null);
     if (!hasAnyValue) {
       return NextResponse.json(
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     const dateValue = date || new Date().toISOString();
 
     const { rows } = await sql<MeasurementRow>`
-      INSERT INTO measurements (date, system, operator, objective, power_405, power_458, power_488, power_514, power_561, power_633, power_458_max, power_488_max, power_514_max, note)
+      INSERT INTO measurements (date, system, operator, objective, power_405, power_458, power_488, power_514, power_561, power_633, power_640, power_458_max, power_488_max, power_514_max, note)
       VALUES (
         ${dateValue},
         ${system},
@@ -66,6 +66,7 @@ export async function POST(request: Request) {
         ${values["514"] ?? values[514] ?? null},
         ${values["561"] ?? values[561] ?? null},
         ${values["633"] ?? values[633] ?? null},
+        ${values["640"] ?? values[640] ?? null},
         ${values["458_max"] ?? null},
         ${values["488_max"] ?? null},
         ${values["514_max"] ?? null},

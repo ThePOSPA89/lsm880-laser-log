@@ -214,7 +214,7 @@ export default function Home() {
             </div>
 
             {/* Laser power inputs */}
-            <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-9 gap-3 mb-4">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-10 gap-3 mb-4">
               {LASER_LINES.map((laser) => (
                 <div key={laser.key} className="relative">
                   <label className="block text-xs font-medium text-slate-600 mb-1">
