@@ -20,6 +20,12 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [adminToken, setAdminToken] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("adminToken") || "";
+    }
+    return "";
+  });
 
   useEffect(() => {
     async function fetchMeasurements() {
@@ -52,7 +58,10 @@ export default function Home() {
     try {
       const res = await fetch("/api/measurements", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${adminToken}`,
+        },
         body: JSON.stringify({
           system,
           operator,
@@ -61,6 +70,7 @@ export default function Home() {
           note,
         }),
       });
+      if (res.status === 401) throw new Error("Unauthorized: check your admin token");
       if (!res.ok) throw new Error("Failed to save measurement");
       const newMeasurement = await res.json();
       setMeasurements((prev) => [newMeasurement, ...prev]);
@@ -77,7 +87,9 @@ export default function Home() {
     try {
       const res = await fetch(`/api/measurements/${id}`, {
         method: "DELETE",
+        headers: { Authorization: `Bearer ${adminToken}` },
       });
+      if (res.status === 401) throw new Error("Unauthorized: check your admin token");
       if (!res.ok) throw new Error("Failed to delete");
       setMeasurements((prev) => prev.filter((m) => m.id !== id));
     } catch (err) {
@@ -128,7 +140,7 @@ export default function Home() {
     <div className="min-h-screen bg-[var(--background)] font-[family-name:var(--font-sans)]">
       {/* Header */}
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto max-w-6xl px-6 py-5 flex items-center justify-between">
+        <div className="mx-auto max-w-6xl px-6 py-5">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-600 text-white font-bold text-sm">
               LSM
@@ -138,9 +150,6 @@ export default function Home() {
               <p className="text-sm text-slate-500">Microscopy Facility Power Tracking</p>
             </div>
           </div>
-          <a href="/viewer" className="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
-            Open Viewer &rarr;
-          </a>
         </div>
       </header>
 
@@ -156,6 +165,31 @@ export default function Home() {
             </button>
           </div>
         )}
+
+        {/* Admin Token */}
+        <section className="rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              <label className="text-sm font-medium text-amber-800">Admin Token</label>
+            </div>
+            <input
+              type="password"
+              value={adminToken}
+              onChange={(e) => {
+                setAdminToken(e.target.value);
+                localStorage.setItem("adminToken", e.target.value);
+              }}
+              placeholder="Enter admin token to enable write access"
+              className="flex-1 rounded-lg border border-amber-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none bg-white"
+            />
+            {adminToken && (
+              <span className="text-xs text-amber-600 font-medium">Saved locally</span>
+            )}
+          </div>
+        </section>
 
         {/* Input Form */}
         <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">

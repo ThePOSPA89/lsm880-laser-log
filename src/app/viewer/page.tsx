@@ -82,9 +82,7 @@ export default function LaserPowerViewer() {
               <p className="text-sm text-slate-500">Read-only Power Trend Dashboard</p>
             </div>
           </div>
-          <a href="/" className="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
-            &larr; Full Dashboard
-          </a>
+          <span className="text-xs text-slate-400">Read-only</span>
         </div>
       </header>
 
