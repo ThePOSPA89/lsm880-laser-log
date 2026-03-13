@@ -6,9 +6,9 @@ import { LASER_LINES, MICROSCOPE_SYSTEMS, OBJECTIVES, VISIBLE_POINTS } from "@/l
 
 export default function Home() {
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
-  const [system, setSystem] = useState(MICROSCOPE_SYSTEMS[0]);
+  const [system, setSystem] = useState<string>(MICROSCOPE_SYSTEMS[0]);
   const [operator, setOperator] = useState("");
-  const [objective, setObjective] = useState("10x/0.3 Dry");
+  const [objective, setObjective] = useState<string>("10x/0.3 Dry");
   const [values, setValues] = useState<Record<string, string>>({});
   const [note, setNote] = useState("");
   const [selectedLaser, setSelectedLaser] = useState<string | null>(null);
