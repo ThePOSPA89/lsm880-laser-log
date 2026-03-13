@@ -2,29 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Measurement } from "@/lib/types";
-
-const MICROSCOPE_SYSTEMS = [
-  "Elyra7-A2",
-  "Lightsheet7-A2",
-  "LSM780_Airy-A26",
-  "LSM800-A2",
-  "LSM880_Airy-A2",
-  "Falcon-A2",
-  "YokogawaSORA-E26",
-  "LSM910-E26",
-];
-
-const LASER_LINES = [
-  { name: "Diode 405", key: "405", color: "#7c3aed" },
-  { name: "Argon 458", key: "458", color: "#2563eb" },
-  { name: "Argon 488", key: "488", color: "#06b6d4" },
-  { name: "Argon 514", key: "514", color: "#22c55e" },
-  { name: "DPSS 561", key: "561", color: "#eab308" },
-  { name: "HeNe 633", key: "633", color: "#ef4444" },
-  { name: "Argon 458 max", key: "458_max", color: "#1e40af" },
-  { name: "Argon 488 max", key: "488_max", color: "#0891b2" },
-  { name: "Argon 514 max", key: "514_max", color: "#15803d" },
-];
+import { LASER_LINES, MICROSCOPE_SYSTEMS, OBJECTIVES, VISIBLE_POINTS } from "@/lib/constants";
 
 export default function Home() {
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
@@ -42,8 +20,6 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const VISIBLE_POINTS = 40;
 
   useEffect(() => {
     async function fetchMeasurements() {
@@ -152,7 +128,7 @@ export default function Home() {
     <div className="min-h-screen bg-[var(--background)] font-[family-name:var(--font-sans)]">
       {/* Header */}
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto max-w-6xl px-6 py-5">
+        <div className="mx-auto max-w-6xl px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-600 text-white font-bold text-sm">
               LSM
@@ -162,6 +138,9 @@ export default function Home() {
               <p className="text-sm text-slate-500">Microscopy Facility Power Tracking</p>
             </div>
           </div>
+          <a href="/viewer" className="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+            Open Viewer &rarr;
+          </a>
         </div>
       </header>
 
@@ -218,12 +197,9 @@ export default function Home() {
                   onChange={(e) => setObjective(e.target.value)}
                   className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none bg-white"
                 >
-                  <option>10x/0.3 Dry</option>
-                  <option>Plan-Apochromat 63x/1.4 Oil</option>
-                  <option>Plan-Apochromat 40x/1.3 Oil</option>
-                  <option>Plan-Apochromat 20x/0.8</option>
-                  <option>Plan-Apochromat 10x/0.45</option>
-                  <option>C-Apochromat 40x/1.2 W</option>
+                  {OBJECTIVES.map((o) => (
+                    <option key={o} value={o}>{o}</option>
+                  ))}
                 </select>
               </div>
               <div>
