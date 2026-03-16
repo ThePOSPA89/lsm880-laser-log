@@ -124,6 +124,20 @@ export default function Home() {
   const minValue = chartData.length > 0 ? Math.min(...chartData.map((d) => d.value)) : 0;
   const selectedLaserInfo = LASER_LINES.find((l) => l.key === selectedLaser);
 
+  // Trend statistics for the full filtered dataset
+  const trendStats = selectedLaser && chartDataAll.length >= 2
+    ? (() => {
+        const firstVal = chartDataAll[0].value;
+        const lastVal = chartDataAll[chartDataAll.length - 1].value;
+        const pctChange = firstVal !== 0 ? ((lastVal - firstVal) / firstVal) * 100 : 0;
+        const allValues = chartDataAll.map((d) => d.value);
+        const avg = allValues.reduce((a, b) => a + b, 0) / allValues.length;
+        const min = Math.min(...allValues);
+        const max = Math.max(...allValues);
+        return { firstVal, lastVal, pctChange, avg, min, max, count: chartDataAll.length };
+      })()
+    : null;
+
   return (
     <div className="min-h-screen bg-[var(--background)] font-[family-name:var(--font-sans)]">
       {/* Header */}
@@ -428,6 +442,34 @@ export default function Home() {
                   </svg>
                 );
               })()}
+
+              {/* Trend statistics */}
+              {trendStats && (
+                <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="rounded-lg bg-slate-50 border border-slate-100 px-3 py-2.5 text-center">
+                    <div className="text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-0.5">Trend</div>
+                    <div className={`text-sm font-bold font-mono ${trendStats.pctChange > 0 ? "text-emerald-600" : trendStats.pctChange < 0 ? "text-red-500" : "text-slate-600"}`}>
+                      {trendStats.pctChange > 0 ? "+" : ""}{trendStats.pctChange.toFixed(1)}%
+                    </div>
+                    <div className="text-[10px] text-slate-400">{trendStats.firstVal.toFixed(1)} → {trendStats.lastVal.toFixed(1)} mW</div>
+                  </div>
+                  <div className="rounded-lg bg-slate-50 border border-slate-100 px-3 py-2.5 text-center">
+                    <div className="text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-0.5">Average</div>
+                    <div className="text-sm font-bold font-mono text-slate-700">{trendStats.avg.toFixed(2)} mW</div>
+                    <div className="text-[10px] text-slate-400">{trendStats.count} measurements</div>
+                  </div>
+                  <div className="rounded-lg bg-slate-50 border border-slate-100 px-3 py-2.5 text-center">
+                    <div className="text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-0.5">Min</div>
+                    <div className="text-sm font-bold font-mono text-slate-700">{trendStats.min.toFixed(2)} mW</div>
+                    <div className="text-[10px] text-slate-400">{chartDataAll[0]?.date} — {chartDataAll[chartDataAll.length - 1]?.date}</div>
+                  </div>
+                  <div className="rounded-lg bg-slate-50 border border-slate-100 px-3 py-2.5 text-center">
+                    <div className="text-[10px] font-medium text-slate-400 uppercase tracking-wide mb-0.5">Max</div>
+                    <div className="text-sm font-bold font-mono text-slate-700">{trendStats.max.toFixed(2)} mW</div>
+                    <div className="text-[10px] text-slate-400">{chartDataAll[0]?.date} — {chartDataAll[chartDataAll.length - 1]?.date}</div>
+                  </div>
+                </div>
+              )}
 
               {/* Range slider */}
               {chartDataAll.length > VISIBLE_POINTS && (
