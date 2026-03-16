@@ -6,12 +6,15 @@ export interface LaserLine {
 
 export const LASER_LINES: LaserLine[] = [
   { name: "Diode 405", key: "405", color: "#7c3aed" },
+  { name: "WLL 440", key: "440", color: "#6366f1" },
+  { name: "Diode 445", key: "445", color: "#4f46e5" },
   { name: "Argon 458", key: "458", color: "#2563eb" },
   { name: "Argon 488", key: "488", color: "#06b6d4" },
   { name: "Argon 514", key: "514", color: "#22c55e" },
   { name: "DPSS 561", key: "561", color: "#eab308" },
   { name: "HeNe 633", key: "633", color: "#ef4444" },
   { name: "Diode 640", key: "640", color: "#dc2626" },
+  { name: "MP 790", key: "790", color: "#be185d" },
   { name: "Argon 458 max", key: "458_max", color: "#1e40af" },
   { name: "Argon 488 max", key: "488_max", color: "#0891b2" },
   { name: "Argon 514 max", key: "514_max", color: "#15803d" },

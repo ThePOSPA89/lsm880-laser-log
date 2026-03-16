@@ -23,7 +23,10 @@ export async function GET() {
       );
     `;
     // Add columns if table already exists (migration)
+    await sql`ALTER TABLE measurements ADD COLUMN IF NOT EXISTS power_440 REAL`;
+    await sql`ALTER TABLE measurements ADD COLUMN IF NOT EXISTS power_445 REAL`;
     await sql`ALTER TABLE measurements ADD COLUMN IF NOT EXISTS power_640 REAL`;
+    await sql`ALTER TABLE measurements ADD COLUMN IF NOT EXISTS power_790 REAL`;
     await sql`ALTER TABLE measurements ADD COLUMN IF NOT EXISTS power_458_max REAL`;
     await sql`ALTER TABLE measurements ADD COLUMN IF NOT EXISTS power_488_max REAL`;
     await sql`ALTER TABLE measurements ADD COLUMN IF NOT EXISTS power_514_max REAL`;

@@ -7,12 +7,15 @@ export interface MeasurementRow {
   operator: string;
   objective: string;
   power_405: number | null;
+  power_440: number | null;
+  power_445: number | null;
   power_458: number | null;
   power_488: number | null;
   power_514: number | null;
   power_561: number | null;
   power_633: number | null;
   power_640: number | null;
+  power_790: number | null;
   power_458_max: number | null;
   power_488_max: number | null;
   power_514_max: number | null;
