@@ -271,13 +271,24 @@ export default function LaserPowerViewer() {
                       {/* Line */}
                       <path d={linePath} fill="none" stroke={color} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
 
-                      {/* Data points */}
+                      {/* Data points with hover tooltip */}
                       {points.map((p, i) => (
-                        <g key={i}>
-                          <circle cx={p.x} cy={p.y} r={3} fill="white" stroke={color} strokeWidth={1.5} />
-                          <text x={p.x} y={p.y - 8} textAnchor="middle" fontSize={8} fill="#475569" fontFamily="monospace">
-                            {p.value}
-                          </text>
+                        <g key={i} className="group/point">
+                          {/* Larger invisible hit area */}
+                          <circle cx={p.x} cy={p.y} r={12} fill="transparent" className="cursor-pointer" />
+                          {/* Visible dot */}
+                          <circle cx={p.x} cy={p.y} r={3} fill="white" stroke={color} strokeWidth={1.5} className="pointer-events-none group-hover/point:r-[5px]" />
+                          {/* Hover-only tooltip */}
+                          <g className="opacity-0 group-hover/point:opacity-100 transition-opacity pointer-events-none">
+                            <rect
+                              x={p.x - 32} y={p.y - 28}
+                              width={64} height={18} rx={4}
+                              fill="#1e293b" opacity={0.9}
+                            />
+                            <text x={p.x} y={p.y - 15} textAnchor="middle" fontSize={9} fill="white" fontFamily="monospace" fontWeight="bold">
+                              {p.value} mW
+                            </text>
+                          </g>
                         </g>
                       ))}
 
